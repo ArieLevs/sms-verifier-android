@@ -28,6 +28,7 @@ public class AppConfig {
     public static String URL_AUTHENTICATION = API_SERVER_URI + "/token/"; // Client Authentication
     static String URL_REVOKE_TOKEN = API_SERVER_URI + "/revoke_token/"; // Revoke clients Token
     public static String URL_CONTACT_LIST = API_SERVER_URI + "/contacts_list/";
+    public static String URL_HEALTH_CHECK = API_SERVER_URI + "/health_check/";
 
     // OAuth Client ID
     public static String OAUTH_CLIENT_ID = ""; // OAUTH_CLIENT_ID set at readProperties function

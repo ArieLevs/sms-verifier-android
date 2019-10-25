@@ -8,4 +8,26 @@
         <item name="colorAccent">@color/colorAccent</item>
     </style>
 
+    <!-- ActionBar styles -->
+
+    <style name="ActionBar"
+        parent="Theme.AppCompat.Light.DarkActionBar">
+        <item name="android:background">@color/light_blue</item>
+
+        <!-- Support library compatibility
+        <item name="background">@color/light_blue</item>-->
+    </style>
+
+    <style name="splashScreenTheme" parent="Theme.AppCompat.Light">
+        <!--<item name="android:windowBackground">@drawable/splash_logo_screen</item>-->
+    </style>
+
+    <style name="Theme.Toolbar" parent="ThemeOverlay.AppCompat.Dark.ActionBar">
+        <item name="android:maxHeight">@dimen/abc_action_bar_default_height_material</item>
+        <item name="android:background">@color/light_blue</item>
+        <item name="colorPrimary">@color/light_blue</item>
+        <item name="colorPrimaryDark">@color/light_blue</item>
+        <item name="colorAccent">@android:color/white</item>
+    </style>
+
 </resources>
