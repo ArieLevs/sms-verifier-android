@@ -7,8 +7,8 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
-import android.support.design.widget.TextInputLayout;
-import android.support.v7.app.AppCompatActivity;
+import com.google.android.material.textfield.TextInputLayout;
+import androidx.appcompat.app.AppCompatActivity;
 import android.util.Base64;
 import android.util.Log;
 import android.view.Menu;
@@ -92,8 +92,6 @@ public class LoginActivity extends AppCompatActivity {
 
         //Set login register forgot buttons
         Button loginButton = findViewById(R.id.loginButton);
-        Button registerButton = findViewById(R.id.registerButton);
-        Button forgotPassButton = findViewById(R.id.forgotPasswordButton);
 
         // Progress dialog
         pDialog = new ProgressDialog(this);
@@ -149,22 +147,6 @@ public class LoginActivity extends AppCompatActivity {
                 loginAttemptCounter = 3;
                 // b1.setEnabled(false);
             }
-
-        });
-
-        //Register button function
-        registerButton.setOnClickListener((View v) -> {
-            Intent regIntent = new Intent(getApplicationContext(),
-                    RegisterActivity.class);
-            startActivity(regIntent);
-
-        });
-
-        //Forgot password button function
-        forgotPassButton.setOnClickListener((View v) -> {
-            Intent intent = new Intent(getApplicationContext(),
-                    ForgotPasswordActivity.class);
-            startActivity(intent);
 
         });
     }
