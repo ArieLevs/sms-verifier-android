@@ -1,6 +1,5 @@
 package cloud.nalkins.sms_verifier;
 
-import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
@@ -25,41 +24,31 @@ public class Functions {
 
     private static final String TAG = Functions.class.getSimpleName();
 
-    public static void showDialog(ProgressDialog pDialog) {
-        if (!pDialog.isShowing())
-            pDialog.show();
-    }
-
-    public static void hideDialog(ProgressDialog pDialog) {
-        if (pDialog.isShowing())
-            pDialog.dismiss();
-    }
-
     static boolean validateUsername(String username) {
         return (!username.isEmpty() && username.length() >= 6 && isAlphanumeric(username));
     }
 
-    public static boolean validateEmail(String email) {
+    static boolean validateEmail(String email) {
         return (!email.isEmpty() && android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches());
     }
 
-    public static boolean isValidPassword(String password) {
+    static boolean isValidPassword(String password) {
         return (password.length() >= 8 && password.length() <= 16);
     }
 
     // Redirect user project readme page
-    public static void helpFunction(Context context) {
+    static void helpFunction(Context context) {
         Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(AppConfig.SMS_VERIFIER_ANDROID_README_URL));
         context.startActivity(browserIntent);
     }
 
     // Redirect user to NalkinsCloud Project license page
-    public static void legalFunction(Context context) {
+    static void legalFunction(Context context) {
         Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(AppConfig.SMS_VERIFIER_ANDROID_LICENSE_URL));
         context.startActivity(browserIntent);
     }
 
-    public static boolean isAlphanumeric(String str) {
+    private static boolean isAlphanumeric(String str) {
         for (int i = 0; i < str.length(); i++) {
             char c = str.charAt(i);
             if (!Character.isDigit(c) && !Character.isLetter(c) && c != ' ')

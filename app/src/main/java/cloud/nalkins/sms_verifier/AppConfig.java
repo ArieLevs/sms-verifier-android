@@ -85,6 +85,7 @@ public class AppConfig {
         URL_AUTHENTICATION = API_SERVER_URI + "/token/";
         URL_REVOKE_TOKEN = API_SERVER_URI + "/revoke_token/";
         URL_CONTACT_LIST = API_SERVER_URI + "/contacts_list/";
+        URL_HEALTH_CHECK = API_SERVER_URI + "/health_check/";
 
         OAUTH_CLIENT_ID = getProperty("oauth_client_id");
         OAUTH_CLIENT_SECRET = getProperty("oauth_client_secret");

@@ -1,12 +1,15 @@
 package cloud.nalkins.sms_verifier;
 
-import android.app.ProgressDialog;
 import android.content.Intent;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 import android.util.Log;
+import android.view.View;
+import android.widget.ProgressBar;
+import android.widget.RelativeLayout;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -33,18 +36,19 @@ public class LogoActivity extends AppCompatActivity {
     private static final String TAG = LogoActivity.class.getSimpleName(); // set TAG for logs
     private SharedPreferences sharedPreferences; // store info to shared preferences
 
-    private ProgressDialog pDialog; // 'processing' dialog
+    ProgressBar progressBar;
     Handler uiHandler;
 
     // define namings to int variables
-    final int SHOW_AUTHENTICATING_DIALOG = 1;
-    final int HIDE_DIALOG = 0;
+    final int SHOW_AUTHENTICATING_PBAR = 1;
+    final int HIDE_PBAR = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.activity_logo);
 
+        // Read application properties for current environment
         try {
             AppConfig.readProperties(getApplicationContext());
         } catch (IOException e) {
@@ -55,30 +59,36 @@ public class LogoActivity extends AppCompatActivity {
         // Session manager
         sharedPreferences = new SharedPreferences(getApplicationContext());
 
-        // Progress dialog
-        pDialog = new ProgressDialog(this);
-        pDialog.setCancelable(false);
+        // Progress Bar setup
+        RelativeLayout layout = findViewById(R.id.activity_logo_main);
+        progressBar = new ProgressBar(LogoActivity.this, null, android.R.attr.progressBarStyleLarge);
+        progressBar.setBackgroundColor(Color.parseColor("#80FFFFFF"));
+        progressBar.setClickable(false);
+        progressBar.setVisibility(View.VISIBLE);
+        RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(200, 200);
+        params.addRule(RelativeLayout.CENTER_IN_PARENT);
 
         // Set UI Handler to send actions to UI
         uiHandler = new Handler(Looper.getMainLooper()) {
             @Override
             public void handleMessage(Message inputMessage) {
                 switch (inputMessage.what) {
-                    case SHOW_AUTHENTICATING_DIALOG:
-                        pDialog.setMessage("Authenticating ...");
-                        Functions.showDialog(pDialog);
+                    case SHOW_AUTHENTICATING_PBAR:
+                        layout.addView(progressBar, params);
                         break;
-                    case HIDE_DIALOG:
-                        Functions.hideDialog(pDialog);
+                    case HIDE_PBAR:
+                        layout.removeView(progressBar);
                         break;
                 }
             }
         };
 
+        // If there is not authentication token stored, start login activity
+        // Else
         if (sharedPreferences.getToken().equals("NULL"))
             lunchLoginActivity();
         else
-            getUsernameFromServer();
+            testBackendHealth();
     }
 
     /**
@@ -87,20 +97,21 @@ public class LogoActivity extends AppCompatActivity {
      * If there was an error, login activity will start
      * If received unauthorized response, try getting new access token
      */
-    private void getUsernameFromServer() {
-        Log.d(TAG, "Running 'getUsernameFromServer' function");
+    private void testBackendHealth() {
+        Log.d(TAG, "Running 'testBackendHealth' function");
         String tag_check_health = "req_check_health";
 
         Message showDialog =
-                uiHandler.obtainMessage(SHOW_AUTHENTICATING_DIALOG, pDialog);
+                uiHandler.obtainMessage(SHOW_AUTHENTICATING_PBAR, progressBar);
         final Message hideDialog =
-                uiHandler.obtainMessage(HIDE_DIALOG, pDialog);
+                uiHandler.obtainMessage(HIDE_PBAR, progressBar);
         showDialog.sendToTarget();
 
+        Log.d(TAG, "Sending request to: " + AppConfig.URL_HEALTH_CHECK);
         JsonObjectRequest strReq = new JsonObjectRequest(Request.Method.POST,
                 AppConfig.URL_HEALTH_CHECK, new JSONObject(), (JSONObject response) -> {
 
-            Log.d(TAG, "Health check Response: " + response.toString());
+            Log.d(TAG, AppConfig.URL_HEALTH_CHECK + " Response: " + response.toString());
             try {
                 String status = response.getString("status");
                 // Check if status is success
@@ -109,12 +120,12 @@ public class LogoActivity extends AppCompatActivity {
                     sharedPreferences.setUsername(response.getString("message"));
 
                     // Launch main activity
-                    Intent intent = new Intent(getApplicationContext(), LogoActivity.class);
+                    Intent intent = new Intent(getApplicationContext(), MainActivity.class);
+                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                     getApplicationContext().startActivity(intent);
                     finish();
                 } else {
-                    Log.e(TAG, "Somethings wrong with server response, " +
-                            "Check server side!");
+                    Log.e(TAG, response.getString("message"));
                     lunchLoginActivity();
                 }
             } catch (JSONException e) {
@@ -134,7 +145,7 @@ public class LogoActivity extends AppCompatActivity {
                 hideDialog.sendToTarget();
             } else {
                 // Get response body and parse with appropriate encoding
-                if (error.networkResponse.data != null) {
+                if (error.networkResponse != null) {
                     try {
                         String statusCode = String.valueOf(error.networkResponse.statusCode);
                         Log.e(TAG, "Server response code: " + statusCode);
@@ -177,7 +188,7 @@ public class LogoActivity extends AppCompatActivity {
         String tag_string_req = "req_refresh_token";
 
         final Message hideDialog =
-                uiHandler.obtainMessage(HIDE_DIALOG, pDialog);
+                uiHandler.obtainMessage(HIDE_PBAR, progressBar);
 
         // Start new StringRequest (HTTP)
         StringRequest strReq = new StringRequest(Request.Method.POST,
@@ -194,7 +205,7 @@ public class LogoActivity extends AppCompatActivity {
                     sharedPreferences.setToken(token);
                     sharedPreferences.setRefreshToken(jObj.getString("refresh_token"));
 
-                    getUsernameFromServer();
+                    testBackendHealth();
                 } else {
                     // Error in login. Get the error message
                     Log.d(TAG, "Error message: " + jObj.getString("error_msg"));

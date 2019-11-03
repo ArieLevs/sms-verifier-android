@@ -1,14 +1,18 @@
 package cloud.nalkins.sms_verifier;
 
-import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
+
 import com.google.android.material.textfield.TextInputLayout;
+
+import android.graphics.Color;
+
 import androidx.appcompat.app.AppCompatActivity;
+
 import android.util.Base64;
 import android.util.Log;
 import android.view.Menu;
@@ -17,6 +21,8 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
+import android.widget.ProgressBar;
+import android.widget.RelativeLayout;
 import android.widget.Toast;
 
 import com.android.volley.NoConnectionError;
@@ -32,10 +38,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
-import cloud.nalkins.sms_verifier.Functions;
-import cloud.nalkins.sms_verifier.NetworkRequests;
-import cloud.nalkins.sms_verifier.SharedPreferences;
-
 /**
  * Class handles the login action of the app
  */
@@ -43,11 +45,11 @@ public class LoginActivity extends AppCompatActivity {
 
     private static final String TAG = LoginActivity.class.getSimpleName(); //Set TAG for logs
     int loginAttemptCounter = 3; // Counter for failed login attempts
-    private ProgressDialog pDialog; // 'Loading' dialog
+    ProgressBar progressBar;
 
     Handler uiHandler;
-    final int SHOW_LOGIN_DIALOG = 1;
-    final int HIDE_DIALOG = 0;
+    final int SHOW_LOGIN_PBAR = 1;
+    final int HIDE_PBAR = 0;
 
     private SharedPreferences sharedPreferences; // Store info to shared preferences
 
@@ -82,32 +84,37 @@ public class LoginActivity extends AppCompatActivity {
         setContentView(R.layout.activity_login);
         overridePendingTransition(R.anim.slide_in, R.anim.slide_out); // Set animation when activity starts/ends
 
-        //Set email email text fields
+        // Set email email text fields
         final TextInputLayout emailWrapper = findViewById(R.id.emailWrapper);
         final TextInputLayout passwordWrapper = findViewById(R.id.passwordWrapper);
 
-        //Set error hints when validation fail
+        // Progress Bar setup
+        progressBar = new ProgressBar(LoginActivity.this, null, android.R.attr.progressBarStyleLarge);
+        progressBar.setBackgroundColor(Color.parseColor("#80FFFFFF"));
+        progressBar.setClickable(false);
+        progressBar.setVisibility(View.VISIBLE);
+
+        RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(200, 200);
+        params.addRule(RelativeLayout.CENTER_IN_PARENT);
+        RelativeLayout layout = findViewById(R.id.activity_login_main);
+
+        // Set error hints when validation fail
         emailWrapper.setHint("Email");
         passwordWrapper.setHint("Password");
 
-        //Set login register forgot buttons
+        // Set login register forgot buttons
         Button loginButton = findViewById(R.id.loginButton);
-
-        // Progress dialog
-        pDialog = new ProgressDialog(this);
-        pDialog.setCancelable(false);
 
         // Set UI Handler to send actions to UI
         uiHandler = new Handler(Looper.getMainLooper()) {
             @Override
             public void handleMessage(Message inputMessage) {
                 switch (inputMessage.what) {
-                    case SHOW_LOGIN_DIALOG:
-                        pDialog.setMessage("Logging in ...");
-                        Functions.showDialog(pDialog);
+                    case SHOW_LOGIN_PBAR:
+                        layout.addView(progressBar, params);
                         break;
-                    case HIDE_DIALOG:
-                        Functions.hideDialog(pDialog);
+                    case HIDE_PBAR:
+                        layout.removeView(progressBar);
                         break;
                 }
             }
@@ -145,7 +152,6 @@ public class LoginActivity extends AppCompatActivity {
             if (loginAttemptCounter == 0) {
                 Toast.makeText(getApplicationContext(), "Forgot your Password?", Toast.LENGTH_SHORT).show();
                 loginAttemptCounter = 3;
-                // b1.setEnabled(false);
             }
 
         });
@@ -166,17 +172,19 @@ public class LoginActivity extends AppCompatActivity {
         // Tag used to cancel the request
         String tag_string_req = "req_login";
 
-        final Message showDialog =
-                uiHandler.obtainMessage(SHOW_LOGIN_DIALOG, pDialog);
-        final Message hideDialog =
-                uiHandler.obtainMessage(HIDE_DIALOG, pDialog);
-        showDialog.sendToTarget();
+        final Message showProgressBar =
+                uiHandler.obtainMessage(SHOW_LOGIN_PBAR, progressBar);
+        final Message hideProgressBar =
+                uiHandler.obtainMessage(HIDE_PBAR, progressBar);
+        showProgressBar.sendToTarget();
 
+        Log.d(TAG, username + " ###### " +password);
+
+        Log.d(TAG, "Sending request to: " + AppConfig.URL_AUTHENTICATION);
         // Start new StringRequest (HTTP)
         StringRequest strReq = new StringRequest(Method.POST,
                 AppConfig.URL_AUTHENTICATION, (String response) -> {
-
-            hideDialog.sendToTarget();
+            hideProgressBar.sendToTarget();
             Log.d(TAG, "Login Response: " + response);
             try {
                 JSONObject jObj = new JSONObject(response);
@@ -191,6 +199,7 @@ public class LoginActivity extends AppCompatActivity {
 
                     // Launch main activity
                     Intent intent = new Intent(getApplicationContext(), MainActivity.class);
+                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                     getApplicationContext().startActivity(intent);
                     finish();
                 } else {
@@ -206,9 +215,9 @@ public class LoginActivity extends AppCompatActivity {
             }
         }, (VolleyError error) -> {
             if (error instanceof TimeoutError || error instanceof NoConnectionError) {
-                Log.e(TAG, "Server Time out error or no connection");
+                Log.e(TAG, error.getMessage());
                 Toast.makeText(getApplicationContext(),
-                        "Timeout error! Server is not responding",
+                        error.getMessage(),
                         Toast.LENGTH_LONG).show();
             } else {
                 String body;
@@ -223,7 +232,7 @@ public class LoginActivity extends AppCompatActivity {
                 //get response body and parse with appropriate encoding
                 try {
                     body = new String(error.networkResponse.data, StandardCharsets.UTF_8);
-                    Log.e(TAG, "Login Error: " + body);
+                    Log.e(TAG, body);
                     Toast.makeText(getApplicationContext(),
                             "Wrong credentials or email was not verified",
                             Toast.LENGTH_LONG).show();
@@ -231,7 +240,7 @@ public class LoginActivity extends AppCompatActivity {
                     e.printStackTrace();
                 }
             }
-            hideDialog.sendToTarget();
+            hideProgressBar.sendToTarget();
         }) {
             // Set the OAUTH2 header to hold the client ID + client secret
             @Override
