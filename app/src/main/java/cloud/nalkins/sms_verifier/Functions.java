@@ -39,12 +39,14 @@ public class Functions {
     // Redirect user project readme page
     static void helpFunction(Context context) {
         Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(AppConfig.SMS_VERIFIER_ANDROID_README_URL));
+        browserIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         context.startActivity(browserIntent);
     }
 
     // Redirect user to NalkinsCloud Project license page
     static void legalFunction(Context context) {
         Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(AppConfig.SMS_VERIFIER_ANDROID_LICENSE_URL));
+        browserIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         context.startActivity(browserIntent);
     }
 

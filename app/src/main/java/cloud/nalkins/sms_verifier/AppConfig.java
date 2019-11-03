@@ -20,23 +20,23 @@ public class AppConfig {
     static String SERVER_SSL_CRT_FILE = ""; // SERVER_SSL_CRT_FILE set at readProperties function
 
     // Web Server URIs
-    public static String API_SERVER_HOST = ""; // API_SERVER_HOST set at readProperties function
-    private static String API_SERVER_PORT = ""; // API_SERVER_PORT set at readProperties function
-    private static String API_SERVER_PROTOCOL = ""; // API_SERVER_PROTOCOL set at readProperties function
+    static String API_SERVER_HOST = ""; // API_SERVER_HOST set at readProperties function
+    static String API_SERVER_PORT = ""; // API_SERVER_PORT set at readProperties function
+    static String API_SERVER_PROTOCOL = ""; // API_SERVER_PROTOCOL set at readProperties function
     private static String API_SERVER_URI = ""; // API_SERVER_URI set at readProperties function
 
-    public static String URL_AUTHENTICATION = API_SERVER_URI + "/token/"; // Client Authentication
+    static String URL_AUTHENTICATION = API_SERVER_URI + "/token/"; // Client Authentication
     static String URL_REVOKE_TOKEN = API_SERVER_URI + "/revoke_token/"; // Revoke clients Token
     public static String URL_CONTACT_LIST = API_SERVER_URI + "/contacts_list/";
-    public static String URL_HEALTH_CHECK = API_SERVER_URI + "/health_check/";
+    static String URL_HEALTH_CHECK = API_SERVER_URI + "/health_check/";
 
     // OAuth Client ID
-    public static String OAUTH_CLIENT_ID = ""; // OAUTH_CLIENT_ID set at readProperties function
+    static String OAUTH_CLIENT_ID = ""; // OAUTH_CLIENT_ID set at readProperties function
     // Client secret
-    public static String OAUTH_CLIENT_SECRET = ""; // OAUTH_CLIENT_SECRET set at readProperties function
+    static String OAUTH_CLIENT_SECRET = ""; // OAUTH_CLIENT_SECRET set at readProperties function
 
-    static String SMS_VERIFIER_ANDROID_README_URL = "https://github.com/ArieLevs/NalkinsCloud-Android/blob/master/README.md";
-    static String SMS_VERIFIER_ANDROID_LICENSE_URL = "https://github.com/ArieLevs/NalkinsCloud-Android/blob/master/LICENSE";
+    static String SMS_VERIFIER_ANDROID_README_URL = "https://github.com/ArieLevs/sms-verifier-android/blob/master/README.md";
+    static String SMS_VERIFIER_ANDROID_LICENSE_URL = "https://github.com/ArieLevs/sms-verifier-android/blob/master/LICENSE";
 
     private static Properties properties;
 
