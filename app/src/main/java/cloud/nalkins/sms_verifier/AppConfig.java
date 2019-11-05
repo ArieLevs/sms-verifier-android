@@ -27,6 +27,7 @@ public class AppConfig {
 
     static String URL_AUTHENTICATION = API_SERVER_URI + "/token/"; // Client Authentication
     static String URL_REVOKE_TOKEN = API_SERVER_URI + "/revoke_token/"; // Revoke clients Token
+    public static String URL_BROADCAST_LIST = API_SERVER_URI + "/broadcast_lists/";
     public static String URL_CONTACT_LIST = API_SERVER_URI + "/contacts_list/";
     static String URL_HEALTH_CHECK = API_SERVER_URI + "/health_check/";
 
@@ -85,6 +86,7 @@ public class AppConfig {
         URL_AUTHENTICATION = API_SERVER_URI + "/token/";
         URL_REVOKE_TOKEN = API_SERVER_URI + "/revoke_token/";
         URL_CONTACT_LIST = API_SERVER_URI + "/contacts_list/";
+        URL_BROADCAST_LIST = API_SERVER_URI + "/broadcast_lists/";
         URL_HEALTH_CHECK = API_SERVER_URI + "/health_check/";
 
         OAUTH_CLIENT_ID = getProperty("oauth_client_id");
