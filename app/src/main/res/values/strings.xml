@@ -2,6 +2,8 @@
     <string name="app_name">SMS-Verifier</string>
     <string name="developer">Project by Arie Lev</string>
 
+    <string name="NA">Not available</string>
+
     <string name="btn_login">Login</string>
     <string name="btn_register">Create Account</string>
     <string name="btn_forgot_pass">Forgot Password</string>

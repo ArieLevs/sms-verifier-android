@@ -10,10 +10,13 @@
     android:orientation="vertical"
     tools:context="cloud.nalkins.sms_verifier.MainActivity">
 
-
-    <TextView
-        android:layout_width="wrap_content"
+    <LinearLayout
+        android:id="@+id/dynamicBroadcastListLayout"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Hello World!"/>
+        android:orientation="vertical"
+        android:paddingTop="5dp"
+        android:paddingBottom="5dp">
+    </LinearLayout>
 
 </RelativeLayout>

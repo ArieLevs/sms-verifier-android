@@ -12,6 +12,8 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.CompoundButton;
+import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.Toast;
@@ -35,7 +37,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static org.json.JSONObject.NULL;
-
 
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = MainActivity.class.getSimpleName(); // set TAG for logs
@@ -91,6 +92,9 @@ public class MainActivity extends AppCompatActivity {
         if (sharedPreferences.getToken() == NULL) {
             finish();
         }
+
+//        final Fragment first = new BroadcastListLayout();
+
         // Print a welcome message
         Toast.makeText(getApplicationContext(), "Welcome " + sharedPreferences.getUsername(), Toast.LENGTH_LONG).show();
 
@@ -120,6 +124,12 @@ public class MainActivity extends AppCompatActivity {
         };
 
         getBroadcastListFromServer();
+
+
+//        FragmentManager fm = getSupportFragmentManager();
+//        FragmentTransaction fragmentTransaction = fm.beginTransaction();
+//        fragmentTransaction.replace(R.id.dynamicBroadcastListLayout, first);
+//        fragmentTransaction.commit();
     }
 
     /**
@@ -143,12 +153,14 @@ public class MainActivity extends AppCompatActivity {
                 // If status response equals success
                 if (response.getString("status").equals("success")) {
                     // Save response to in memory
+                    // ### The response is not being validated, and assumed that the server responses
+                    // with a very specific json structure ###
                     broadcastJsonList = response.getJSONArray("message");
 
                     hideDialog.sendToTarget();
 
                     // Once successful, generate views
-//                    initBroadcastLists();
+                    initBroadcastLists();
                 } else {
                     hideDialog.sendToTarget();
                     String responseMessage = response.getString("message");
@@ -225,4 +237,47 @@ public class MainActivity extends AppCompatActivity {
                 })
                 .setNegativeButton(android.R.string.no, null).show();
     }
+
+    public void initBroadcastLists() {
+        Log.d(TAG, "running 'initBroadcastLists' Function");
+
+        // Set parent layout (this is the main layout)
+        LinearLayout mainLayout = findViewById(R.id.dynamicBroadcastListLayout);
+
+        for(int i = 0; i < broadcastJsonList.length(); i++) {
+            try {
+                JSONObject broadcast_list = broadcastJsonList.getJSONObject(i);
+                String broadcastName = broadcast_list.getString("broadcast_name");
+                String eventName = broadcast_list.getString("event_name");
+                Log.d(TAG, "Working on list: " + broadcastName);
+
+                String messageContent = broadcast_list.getString("message_content");
+                JSONArray contacts = broadcast_list.getJSONArray("contacts");
+
+                final BroadcastListLayout tempLayout = new BroadcastListLayout(getApplicationContext(), broadcastName, eventName);
+
+                // Set the 'Automation toggle button'
+//                tempLayout.getBroadcastToggleButton().setOnCheckedChangeListener((CompoundButton buttonView, boolean isChecked) ->
+//
+//                    new AlertDialog.Builder(this)
+//                            .setTitle("Broadcast " + broadcastName)
+//                            .setMessage("Do you really want to send this broadcast?")
+//                            .setIcon(R.drawable.warning_64)
+//                            .setPositiveButton(android.R.string.yes, (DialogInterface dialog, int whichButton) ->
+//                                    sendMessages(messageContent, contacts) )
+//                            .setNegativeButton(android.R.string.no, null).show()
+//                );
+
+                tempLayout.setBroadcastToggleButton(false);
+
+                mainLayout.addView(tempLayout.getView());
+            } catch (JSONException e) {
+                // JSON error
+                Log.d(TAG, "Json error: " + e.toString());
+                Toast.makeText(getApplicationContext(), "initBroadcastLists Json error: " + e.getMessage(), Toast.LENGTH_LONG).show();
+            }
+        }
+    }
+
+
 }
