@@ -178,8 +178,6 @@ public class LoginActivity extends AppCompatActivity {
                 uiHandler.obtainMessage(HIDE_PBAR, progressBar);
         showProgressBar.sendToTarget();
 
-        Log.d(TAG, username + " ###### " +password);
-
         Log.d(TAG, "Sending request to: " + AppConfig.URL_AUTHENTICATION);
         // Start new StringRequest (HTTP)
         StringRequest strReq = new StringRequest(Method.POST,
