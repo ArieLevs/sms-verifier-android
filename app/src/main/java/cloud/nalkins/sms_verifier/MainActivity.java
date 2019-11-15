@@ -1,12 +1,24 @@
 package cloud.nalkins.sms_verifier;
 
+import androidx.annotation.NonNull;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+
+import android.Manifest;
+import android.app.Activity;
+import android.app.PendingIntent;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
+import android.telephony.SmsManager;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -45,6 +57,8 @@ public class MainActivity extends AppCompatActivity {
     Handler uiHandler;
     final int SHOW_PBAR = 1;
     final int HIDE_PBAR = 0;
+    final int SendSMSPermissionID = 1001;
+    private boolean  sendSMSPermissionFlag = true;
 
     static JSONArray broadcastJsonList;
 
@@ -257,16 +271,16 @@ public class MainActivity extends AppCompatActivity {
                 final BroadcastListLayout tempLayout = new BroadcastListLayout(getApplicationContext(), broadcastName, eventName);
 
                 // Set the 'Automation toggle button'
-//                tempLayout.getBroadcastToggleButton().setOnCheckedChangeListener((CompoundButton buttonView, boolean isChecked) ->
-//
-//                    new AlertDialog.Builder(this)
-//                            .setTitle("Broadcast " + broadcastName)
-//                            .setMessage("Do you really want to send this broadcast?")
-//                            .setIcon(R.drawable.warning_64)
-//                            .setPositiveButton(android.R.string.yes, (DialogInterface dialog, int whichButton) ->
-//                                    sendMessages(messageContent, contacts) )
-//                            .setNegativeButton(android.R.string.no, null).show()
-//                );
+                tempLayout.getBroadcastToggleButton().setOnCheckedChangeListener((CompoundButton buttonView, boolean isChecked) ->
+
+                    new AlertDialog.Builder(this)
+                            .setTitle("Broadcast " + broadcastName)
+                            .setMessage("Do you really want to send this broadcast?")
+                            .setIcon(R.drawable.warning_64)
+                            .setPositiveButton(android.R.string.yes, (DialogInterface dialog, int whichButton) ->
+                                    sendMessages(messageContent, contacts) )
+                            .setNegativeButton(android.R.string.no, null).show()
+                );
 
                 tempLayout.setBroadcastToggleButton(false);
 
@@ -279,5 +293,123 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    public void sendMessages(String messageContent, JSONArray contacts) {
 
+        /* If no permission granted for ACCESS_FINE_LOCATION request it
+           The permission is a MUST in order to use wifi network scan
+           If the user did not granted the permission, auto wifi connection cannot be established
+         */
+        if (ContextCompat.checkSelfPermission(MainActivity.this,
+                android.Manifest.permission.SEND_SMS) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(MainActivity.this,
+                    new String[]{android.Manifest.permission.SEND_SMS}, SendSMSPermissionID);
+        }
+
+        if (sendSMSPermissionFlag) {
+            Log.d(TAG, "Sending message: " + messageContent);
+            Log.d(TAG, "Sending SMS messages to: " + contacts.toString());
+
+            for (int i = 0; i < contacts.length(); i++) {
+                try {
+                    String firstName = contacts.getJSONObject(i).getString("first_name");
+                    String phoneNumber = contacts.getJSONObject(i).getString("phone_number");
+                    String uuid = contacts.getJSONObject(i).getString("uuid");
+                    Log.i(TAG, "Sending message to " + firstName + ", num: " + phoneNumber);
+
+                    String text = String.format(messageContent, firstName, uuid);
+
+                    Log.i(TAG, "content: " + text);
+
+                    sendSMSMessage(phoneNumber, text);
+
+                } catch (JSONException e) {
+                    // JSON error
+                    Log.d(TAG, "Json error: " + e.toString());
+                }
+            }
+        } else {
+            Log.e(TAG, "sendSMSPermissionFlag is: FALSE");
+            Toast.makeText(getApplicationContext(), "SEND_SMS permission must be granted to send SMS messages", Toast.LENGTH_LONG).show();
+        }
+    }
+
+    private void sendSMSMessage(String phoneNumber, String message) {
+        String SENT = "SMS_SENT";
+        String DELIVERED = "SMS_DELIVERED";
+
+        PendingIntent sentPendingIntent = PendingIntent.getBroadcast(this, 0, new Intent(SENT), 0);
+        PendingIntent deliveredPendingIntent = PendingIntent.getBroadcast(this, 0, new Intent(DELIVERED), 0);
+
+        // SMS sent (attempted) result
+        registerReceiver(new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context arg0, Intent arg1) {
+                switch (getResultCode()) {
+                    case Activity.RESULT_OK:
+                        Log.i(TAG, "SMS sent");
+                        break;
+                    case SmsManager.RESULT_ERROR_GENERIC_FAILURE:
+                        Log.e(TAG, "Generic failure");
+                        break;
+                    case SmsManager.RESULT_ERROR_NO_SERVICE:
+                        Log.e(TAG, "No service");
+                        break;
+                    case SmsManager.RESULT_ERROR_NULL_PDU:
+                        Log.e(TAG, "Null PDU");
+                        break;
+                    case SmsManager.RESULT_ERROR_RADIO_OFF:
+                        Log.e(TAG, "Radio off");
+                        break;
+                }
+            }
+        }, new IntentFilter(SENT));
+
+        // SMS delivery result
+        registerReceiver(new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context arg0, Intent arg1) {
+                switch (getResultCode()) {
+                    case Activity.RESULT_OK:
+                        Log.i(TAG, "SMS delivered");
+                        break;
+                    case Activity.RESULT_CANCELED:
+                        Log.e(TAG, "SMS not delivered");
+                        break;
+                }
+            }
+        }, new IntentFilter(DELIVERED));
+
+        SmsManager sms = SmsManager.getDefault();
+        sms.sendTextMessage(phoneNumber, null, message, sentPendingIntent, deliveredPendingIntent);
+    }
+
+    // Request SEND_SMS permissions if not granted
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        // Request permissions to send SMS messages
+        if (requestCode == SendSMSPermissionID) {
+            if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                Log.d(TAG, "SEND_SMS permission granted");
+                sendSMSPermissionFlag = true;
+            } else if (grantResults[0] == PackageManager.PERMISSION_DENIED) {
+                if (ActivityCompat.shouldShowRequestPermissionRationale(MainActivity.this, Manifest.permission.SEND_SMS)) {
+                    Log.d(TAG, "SEND_SMS was not granted");
+                    Toast.makeText(getApplicationContext(), "SEND_SMS permission must be granted to send SMS messages", Toast.LENGTH_LONG).show();
+                    sendSMSPermissionFlag = false;
+
+                    AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+                    builder.setTitle("Critical permission required")
+                            .setMessage("This permission in needed to send SMS messages")
+                            .setNegativeButton("OK", null)
+                            .create()
+                            .show();
+                } else {
+                    Log.d(TAG, "SEND_SMS permission was not granted, using 'never ask again'");
+                    sendSMSPermissionFlag = false;
+                    Toast.makeText(getApplicationContext(), "SEND_SMS permission must be granted to send SMS messages", Toast.LENGTH_LONG).show();
+                    //Never ask again and handle app without permission.
+                }
+            }
+        }
+    }
 }
