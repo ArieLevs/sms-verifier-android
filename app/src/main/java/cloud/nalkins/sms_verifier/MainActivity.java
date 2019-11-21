@@ -45,6 +45,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -320,7 +321,8 @@ public class MainActivity extends AppCompatActivity {
 
                     Log.i(TAG, "content: " + text);
 
-                    sendSMSMessage(phoneNumber, text);
+                    // Send the message using handler with gaps of 1 second
+                    new Handler().postDelayed(() -> sendSMSMessage(phoneNumber, text), 1000);
 
                 } catch (JSONException e) {
                     // JSON error
@@ -336,6 +338,9 @@ public class MainActivity extends AppCompatActivity {
     private void sendSMSMessage(String phoneNumber, String message) {
         String SENT = "SMS_SENT";
         String DELIVERED = "SMS_DELIVERED";
+
+        ArrayList<PendingIntent> sentPendingIntents = new ArrayList<>();
+        ArrayList<PendingIntent> deliveredPendingIntents = new ArrayList<>();
 
         PendingIntent sentPendingIntent = PendingIntent.getBroadcast(this, 0, new Intent(SENT), 0);
         PendingIntent deliveredPendingIntent = PendingIntent.getBroadcast(this, 0, new Intent(DELIVERED), 0);
@@ -380,7 +385,13 @@ public class MainActivity extends AppCompatActivity {
         }, new IntentFilter(DELIVERED));
 
         SmsManager sms = SmsManager.getDefault();
-        sms.sendTextMessage(phoneNumber, null, message, sentPendingIntent, deliveredPendingIntent);
+        ArrayList<String> smsParts = sms.divideMessage(message);
+        for (int i = 0; i < smsParts.size(); i++) {
+            sentPendingIntents.add(i, sentPendingIntent);
+            deliveredPendingIntents.add(i, deliveredPendingIntent);
+        }
+
+        sms.sendMultipartTextMessage(phoneNumber, null, smsParts, sentPendingIntents, deliveredPendingIntents);
     }
 
     // Request SEND_SMS permissions if not granted
